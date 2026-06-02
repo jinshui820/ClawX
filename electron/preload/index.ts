@@ -284,6 +284,16 @@ const electronAPI = {
    * Check if running in development
    */
   isDev: process.env.NODE_ENV === 'development' || !!process.env.VITE_DEV_SERVER_URL,
+
+  /**
+   * Host API server port. Honors CLAWX_PORT_CLAWX_HOST_API so isolated/parallel
+   * ClawX instances can each run their renderer<->main API on a distinct port.
+   */
+  hostApiPort: (() => {
+    const raw = process.env.CLAWX_PORT_CLAWX_HOST_API;
+    const parsed = raw ? Number.parseInt(raw, 10) : NaN;
+    return Number.isInteger(parsed) && parsed > 0 && parsed < 65536 ? parsed : 13210;
+  })(),
 };
 
 // Expose the API to the renderer process

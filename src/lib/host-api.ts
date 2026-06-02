@@ -2,7 +2,13 @@ import { invokeIpc } from '@/lib/api-client';
 import { trackUiEvent } from './telemetry';
 import { normalizeAppError } from './error-model';
 
-const HOST_API_PORT = 13210;
+// Prefer the port injected by preload (window.electron.hostApiPort) so isolated
+// or parallel ClawX instances connect to their own main-process API; fall back
+// to the default when the bridge is unavailable.
+const HOST_API_PORT =
+  (typeof window !== 'undefined'
+    && (window as { electron?: { hostApiPort?: number } }).electron?.hostApiPort)
+  || 13210;
 const HOST_API_BASE = `http://127.0.0.1:${HOST_API_PORT}`;
 
 /** Cached Host API auth token, fetched once from the main process via IPC. */

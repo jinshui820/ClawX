@@ -4,20 +4,34 @@
  */
 
 /**
+ * Parse a positive TCP port from an env var, falling back when unset/invalid.
+ */
+function envPort(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isInteger(parsed) && parsed > 0 && parsed < 65536 ? parsed : fallback;
+}
+
+/**
  * Port configuration
  */
 export const PORTS = {
   /** ClawX GUI development server port */
   CLAWX_DEV: 5173,
-  
+
   /** ClawX GUI production port (for reference) */
   CLAWX_GUI: 23333,
 
   /** Local host API server port */
   CLAWX_HOST_API: 13210,
-  
-  /** OpenClaw Gateway port */
-  OPENCLAW_GATEWAY: 18789,
+
+  /**
+   * OpenClaw Gateway port.
+   * Honors CLAWX_GATEWAY_PORT so multiple ClawX instances (and/or a standalone
+   * OpenClaw) can run on distinct gateway ports at the same time.
+   */
+  OPENCLAW_GATEWAY: envPort('CLAWX_GATEWAY_PORT', 18789),
 } as const;
 
 /**

@@ -45,7 +45,9 @@ import {
 } from './quit-lifecycle';
 import { createSignalQuitHandler } from './signal-quit';
 import { acquireProcessInstanceFileLock } from './process-instance-lock';
+import { getSetting } from '../utils/store';
 import { ensureBuiltinSkillsInstalled, ensurePreinstalledSkillsInstalled, trimBundledOpenClawSkillsAndConfigs } from '../utils/skill-config';
+import { PORTS } from '../utils/config';
 
 import { startHostApiServer } from '../api/server';
 import { HostEventBus } from '../api/event-bus';
@@ -63,7 +65,11 @@ if (requestedRemoteDebuggingPort) {
   app.commandLine.appendSwitch('remote-debugging-port', requestedRemoteDebuggingPort);
 }
 
-if (isE2EMode && requestedUserDataDir) {
+// Honor CLAWX_USER_DATA_DIR for isolated profiles (dev sandbox, parallel
+// installed instances, E2E). Must run before requestSingleInstanceLock below so
+// the single-instance lock keys on the isolated userData dir — letting multiple
+// ClawX instances run side by side.
+if (requestedUserDataDir) {
   app.setPath('userData', requestedUserDataDir);
 }
 
@@ -336,7 +342,7 @@ async function initialize(): Promise<void> {
   // The URL filter ensures this callback only fires for gateway requests,
   // avoiding unnecessary overhead on every other HTTP response.
   session.defaultSession.webRequest.onHeadersReceived(
-    { urls: ['http://127.0.0.1:18789/*', 'http://localhost:18789/*'] },
+    { urls: [`http://127.0.0.1:${PORTS.OPENCLAW_GATEWAY}/*`, `http://localhost:${PORTS.OPENCLAW_GATEWAY}/*`] },
     (details, callback) => {
       const headers = { ...details.responseHeaders };
       delete headers['X-Frame-Options'];
