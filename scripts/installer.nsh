@@ -414,9 +414,12 @@ FunctionEnd
 
   _cu_pathDone:
 
-  ; Ask user if they want to remove AppData (preserves .openclaw)
+  ; Ask user if they want to remove ClawX app data. ClawX's *private* OpenClaw
+  ; config now lives under AppData\Roaming\clawx\.openclaw (isolated from a
+  ; standalone official OpenClaw at $PROFILE\.openclaw), so it is removed too;
+  ; the standalone $PROFILE\.openclaw is never touched.
   MessageBox MB_YESNO|MB_ICONQUESTION \
-    "Do you want to remove ClawX application data?$\r$\n$\r$\nThis will delete:$\r$\n  • AppData\Local\clawx (local app data)$\r$\n  • AppData\Roaming\clawx (roaming app data)$\r$\n$\r$\nYour .openclaw folder (configuration & skills) will be preserved.$\r$\nSelect 'No' to keep all data for future reinstallation." \
+    "Do you want to remove ClawX application data?$\r$\n$\r$\nThis will delete:$\r$\n  • AppData\Local\clawx (local app data)$\r$\n  • AppData\Roaming\clawx (app data + ClawX's private OpenClaw config & skills)$\r$\n$\r$\nA standalone OpenClaw at $PROFILE\.openclaw is NOT affected.$\r$\nSelect 'No' to keep all data for future reinstallation." \
     /SD IDNO IDYES _cu_removeData IDNO _cu_skipRemove
 
   _cu_removeData:
@@ -434,7 +437,8 @@ FunctionEnd
     Sleep 2000
 
     ; --- Always remove current user's AppData first ---
-    ; NOTE: .openclaw directory is intentionally preserved (user configuration & skills)
+    ; NOTE: ClawX's private OpenClaw config lives under $APPDATA\clawx\.openclaw and
+    ; is removed here. A standalone official OpenClaw at $PROFILE\.openclaw is preserved.
     RMDir /r "$LOCALAPPDATA\clawx"
     RMDir /r "$APPDATA\clawx"
 
@@ -485,7 +489,8 @@ FunctionEnd
     ExpandEnvStrings $R3 $R2
     StrCmp $R3 $PROFILE _cu_enumNext
 
-    ; NOTE: .openclaw directory is intentionally preserved for all users
+    ; NOTE: a standalone official OpenClaw at <profile>\.openclaw is preserved;
+    ; ClawX's private config under clawx\.openclaw is removed with the dir.
     RMDir /r "$R3\AppData\Local\clawx"
     RMDir /r "$R3\AppData\Roaming\clawx"
 

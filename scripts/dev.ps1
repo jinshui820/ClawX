@@ -48,7 +48,6 @@ if (-not $Shared) {
     . "$PSScriptRoot/clawx-profile.ps1"
     $base = Join-Path $repoRoot ".profiles/$ProfileName"
     Set-ClawXProfileEnv `
-        -HomeDir (Join-Path $base 'home') `
         -UserDataDir (Join-Path $base 'userdata') `
         -GatewayPort $GatewayPort `
         -HostApiPort $HostApiPort
