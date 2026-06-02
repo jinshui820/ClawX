@@ -72,7 +72,7 @@ const defaultSettings = {
   launchAtStartup: false,
   telemetryEnabled: true,
   gatewayAutoStart: true,
-  gatewayPort: 18789,
+  gatewayPort: 18792,
   proxyEnabled: false,
   proxyServer: '',
   proxyHttpServer: '',

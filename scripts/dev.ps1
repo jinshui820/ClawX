@@ -6,17 +6,17 @@
     - 清除 ELECTRON_RUN_AS_NODE(否则 Electron 退化为 node,报 getVersion 崩溃)。
     - 默认以**隔离 profile** 启动:dev 用独立的 ~/.openclaw、~/.clawx、userData 和端口,
       与你安装的正式版 / 独立 OpenClaw 互不干扰,可同时运行。
-      隔离数据放在 <repo>\.profiles\<Profile>\ 下。
+      隔离数据放在 <repo>\.profiles\<ProfileName>\ 下。
     - 传 -Shared 则退回共用真实的 ~/.openclaw 与默认端口(旧行为)。
 
-.PARAMETER Profile
+.PARAMETER ProfileName
     隔离 profile 名(默认 dev)。不同名字 = 不同独立实例。
 
 .PARAMETER GatewayPort
-    OpenClaw 网关端口(默认 18790,正式版默认 18789,独立 OpenClaw 常用 18789)。
+    OpenClaw 网关端口(dev 默认 18790;正式版构建默认 18792;独立 OpenClaw 常用 18789)。
 
 .PARAMETER HostApiPort
-    主进程 Host API 端口(默认 13211,正式版默认 13210)。
+    主进程 Host API 端口(dev 默认 13211;正式版构建默认 13212)。
 
 .PARAMETER Shared
     不隔离,使用真实 ~/.openclaw 与默认端口。
@@ -24,11 +24,11 @@
 .EXAMPLE
     pwsh ./scripts/dev.ps1               # 隔离 dev,网关 18790
     pwsh ./scripts/dev.ps1 -Shared       # 共用正式版数据(旧行为)
-    pwsh ./scripts/dev.ps1 -Profile dev2 -GatewayPort 18791 -HostApiPort 13212
+    pwsh ./scripts/dev.ps1 -ProfileName dev2 -GatewayPort 18793 -HostApiPort 13213
 #>
 
 param(
-    [string]$Profile = 'dev',
+    [string]$ProfileName = 'dev',
     [int]$GatewayPort = 18790,
     [int]$HostApiPort = 13211,
     [switch]$Shared
@@ -46,7 +46,7 @@ if ($env:ELECTRON_RUN_AS_NODE) {
 
 if (-not $Shared) {
     . "$PSScriptRoot/clawx-profile.ps1"
-    $base = Join-Path $repoRoot ".profiles/$Profile"
+    $base = Join-Path $repoRoot ".profiles/$ProfileName"
     Set-ClawXProfileEnv `
         -HomeDir (Join-Path $base 'home') `
         -UserDataDir (Join-Path $base 'userdata') `

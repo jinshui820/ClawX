@@ -24,14 +24,14 @@ export const PORTS = {
   CLAWX_GUI: 23333,
 
   /** Local host API server port */
-  CLAWX_HOST_API: 13210,
+  CLAWX_HOST_API: 13212,
 
   /**
    * OpenClaw Gateway port.
    * Honors CLAWX_GATEWAY_PORT so multiple ClawX instances (and/or a standalone
    * OpenClaw) can run on distinct gateway ports at the same time.
    */
-  OPENCLAW_GATEWAY: envPort('CLAWX_GATEWAY_PORT', 18789),
+  OPENCLAW_GATEWAY: envPort('CLAWX_GATEWAY_PORT', 18792),
 } as const;
 
 /**

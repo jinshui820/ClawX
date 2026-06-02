@@ -155,7 +155,7 @@ async function resolveGatewayPort(): Promise<number> {
   }
 
   const status = await invokeViaIpc<GatewayStatusLike>('gateway:status', []);
-  const port = typeof status?.port === 'number' && status.port > 0 ? status.port : 18789;
+  const port = typeof status?.port === 'number' && status.port > 0 ? status.port : 18792;
   cachedGatewayPort = { port, expiresAt: now + 5000 };
   return port;
 }

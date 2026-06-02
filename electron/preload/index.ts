@@ -292,7 +292,7 @@ const electronAPI = {
   hostApiPort: (() => {
     const raw = process.env.CLAWX_PORT_CLAWX_HOST_API;
     const parsed = raw ? Number.parseInt(raw, 10) : NaN;
-    return Number.isInteger(parsed) && parsed > 0 && parsed < 65536 ? parsed : 13210;
+    return Number.isInteger(parsed) && parsed > 0 && parsed < 65536 ? parsed : 13212;
   })(),
 };
 
