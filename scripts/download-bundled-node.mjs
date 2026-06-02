@@ -39,6 +39,13 @@ async function setupTarget(id) {
   // Only remove the target binary, not the entire directory,
   // to avoid deleting uv.exe or other binaries placed by other download scripts.
   const outputNode = path.join(targetDir, 'node.exe');
+
+  // Idempotency: skip if node.exe already exists (pass --force to re-download).
+  if (!argv.force && (await fs.pathExists(outputNode))) {
+    echo(chalk.green`✅ Already present, skipping (use --force to re-download): ${outputNode}`);
+    return;
+  }
+
   if (await fs.pathExists(outputNode)) {
     await fs.remove(outputNode);
   }

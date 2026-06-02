@@ -68,6 +68,12 @@ async function setupTarget(id) {
   echo(`   asset:  ${target.asset}${reusesX64 ? ' (no native arm64 asset; reusing win32-x64)' : ''}`);
   echo(`   dest:   ${destBin}`);
 
+  // Idempotency: skip if the binary already exists (pass --force to re-download).
+  if (!argv.force && (await fs.pathExists(destBin))) {
+    echo(chalk.green`✅ Already present, skipping (use --force to re-download): ${destBin}`);
+    return;
+  }
+
   // Only remove our own binary, not the entire directory, to avoid deleting
   // uv / node binaries placed by other download scripts.
   if (await fs.pathExists(destBin)) {

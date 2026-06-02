@@ -56,6 +56,12 @@ async function setupTarget(id) {
 
   echo(chalk.blue`\n📦 Setting up uv for ${id}...`);
 
+  // Idempotency: skip if the binary already exists (pass --force to re-download).
+  if (!argv.force && (await fs.pathExists(path.join(targetDir, target.binName)))) {
+    echo(chalk.green`✅ Already present, skipping (use --force to re-download): ${path.join(targetDir, target.binName)}`);
+    return;
+  }
+
   // Cleanup & Prep
   await fs.remove(targetDir);
   await fs.remove(tempDir);
