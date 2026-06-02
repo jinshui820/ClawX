@@ -110,6 +110,32 @@ if (process.env.SKIP_PREINSTALLED_SKILLS === '1') {
 
 const manifestSkills = loadManifest();
 
+// Idempotency: if a previous run already bundled exactly these skills (matching
+// repo/repoPath/ref per slug, with output present), skip re-fetching from GitHub.
+// Pass --force or FORCE_PREINSTALLED_SKILLS=1 to re-fetch (e.g. to pull updates).
+const forceRefetch = argv.force || process.env.FORCE_PREINSTALLED_SKILLS === '1';
+const lockPath = join(OUTPUT_ROOT, '.preinstalled-lock.json');
+if (!forceRefetch && existsSync(lockPath)) {
+  try {
+    const prev = JSON.parse(readFileSync(lockPath, 'utf8'));
+    const prevBySlug = new Map((prev.skills || []).map((s) => [s.slug, s]));
+    const allCached = prevBySlug.size === manifestSkills.length
+      && manifestSkills.every((m) => {
+        const p = prevBySlug.get(m.slug);
+        return p && p.repo === m.repo && p.repoPath === m.repoPath
+          && p.ref === (m.ref || 'main')
+          && existsSync(join(OUTPUT_ROOT, m.slug, 'SKILL.md'));
+      });
+    if (allCached) {
+      echo`✅ Preinstalled skills already cached and up to date, skipping fetch (use --force or FORCE_PREINSTALLED_SKILLS=1 to re-fetch).`;
+      echo`Preinstalled skills ready: ${OUTPUT_ROOT}`;
+      process.exit(0);
+    }
+  } catch {
+    // Corrupt/old lock — fall through to a clean rebuild.
+  }
+}
+
 rmSync(OUTPUT_ROOT, { recursive: true, force: true });
 mkdirSync(OUTPUT_ROOT, { recursive: true });
 rmSync(TMP_ROOT, { recursive: true, force: true });
