@@ -5,6 +5,7 @@ import { basename, extname, join } from 'node:path';
 import { homedir } from 'node:os';
 import type { HostApiContext } from '../context';
 import { parseJsonBody, sendJson } from '../route-utils';
+import { getOpenClawConfigDir } from '../../utils/paths';
 
 const EXT_MIME_MAP: Record<string, string> = {
   '.png': 'image/png',
@@ -53,7 +54,7 @@ function mimeToExt(mimeType: string): string {
   return '';
 }
 
-const OUTBOUND_DIR = join(homedir(), '.openclaw', 'media', 'outbound');
+const OUTBOUND_DIR = join(getOpenClawConfigDir(), 'media', 'outbound');
 const DIRECTORY_MIME_TYPE = 'application/x-directory';
 
 async function generateImagePreview(filePath: string, mimeType: string): Promise<string | null> {
@@ -94,7 +95,7 @@ async function resolveOutgoingMediaUrl(
     if (!m) return null;
     const attachmentId = decodeURIComponent(m[1]);
     if (!/^[A-Za-z0-9._-]+$/.test(attachmentId)) return null;
-    const recordPath = join(homedir(), '.openclaw', 'media', 'outgoing', 'records', `${attachmentId}.json`);
+    const recordPath = join(getOpenClawConfigDir(), 'media', 'outgoing', 'records', `${attachmentId}.json`);
     const fsP = await import('node:fs/promises');
     const raw = await fsP.readFile(recordPath, 'utf8');
     const record = JSON.parse(raw) as {

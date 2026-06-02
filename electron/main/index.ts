@@ -2,6 +2,9 @@
  * Electron Main Process Entry
  * Manages window creation, system tray, and IPC handlers
  */
+// Must be first: settles CLAWX_USER_DATA_DIR + OPENCLAW_HOME before any module
+// evaluates a `.openclaw` path constant at import time.
+import './early-env';
 import { app, BrowserWindow, nativeImage, session, shell } from 'electron';
 import type { Server } from 'node:http';
 import { join } from 'path';
@@ -45,7 +48,6 @@ import {
 } from './quit-lifecycle';
 import { createSignalQuitHandler } from './signal-quit';
 import { acquireProcessInstanceFileLock } from './process-instance-lock';
-import { getSetting } from '../utils/store';
 import { ensureBuiltinSkillsInstalled, ensurePreinstalledSkillsInstalled, trimBundledOpenClawSkillsAndConfigs } from '../utils/skill-config';
 import { PORTS } from '../utils/config';
 
@@ -58,20 +60,15 @@ import { syncAllProviderAuthToRuntime } from '../services/providers/provider-run
 
 const WINDOWS_APP_USER_MODEL_ID = 'app.clawx.desktop';
 const isE2EMode = process.env.CLAWX_E2E === '1';
-const requestedUserDataDir = process.env.CLAWX_USER_DATA_DIR?.trim();
 const requestedRemoteDebuggingPort = process.env.CLAWX_REMOTE_DEBUGGING_PORT?.trim();
 
 if (requestedRemoteDebuggingPort) {
   app.commandLine.appendSwitch('remote-debugging-port', requestedRemoteDebuggingPort);
 }
 
-// Honor CLAWX_USER_DATA_DIR for isolated profiles (dev sandbox, parallel
-// installed instances, E2E). Must run before requestSingleInstanceLock below so
-// the single-instance lock keys on the isolated userData dir — letting multiple
-// ClawX instances run side by side.
-if (requestedUserDataDir) {
-  app.setPath('userData', requestedUserDataDir);
-}
+// CLAWX_USER_DATA_DIR and OPENCLAW_HOME are applied in ./early-env (imported
+// first) so the single-instance lock below and module-level `.openclaw` path
+// constants both observe the isolated dirs.
 
 // Disable GPU hardware acceleration globally for maximum stability across
 // all GPU configurations (no GPU, integrated, discrete).

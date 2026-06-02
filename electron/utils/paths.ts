@@ -48,10 +48,24 @@ export function expandPath(path: string): string {
 }
 
 /**
- * Get OpenClaw config directory
+ * Get the OpenClaw "home" directory (the parent that `.openclaw` lives under).
+ *
+ * Honors `OPENCLAW_HOME` (OpenClaw's own home override, which wins over
+ * HOME/USERPROFILE in its `resolveRawHomeDir`). ClawX defaults `OPENCLAW_HOME`
+ * to its Electron `userData` dir at startup (see electron/main/index.ts), so the
+ * bundled gateway and ClawX agree on a ClawX-private config dir, fully isolated
+ * from a standalone official OpenClaw at `~/.openclaw`.
+ */
+export function getOpenClawHome(): string {
+  const overrideHome = process.env.OPENCLAW_HOME?.trim();
+  return overrideHome || homedir();
+}
+
+/**
+ * Get OpenClaw config directory (`<OPENCLAW_HOME>/.openclaw`).
  */
 export function getOpenClawConfigDir(): string {
-  return join(homedir(), '.openclaw');
+  return join(getOpenClawHome(), '.openclaw');
 }
 
 /**

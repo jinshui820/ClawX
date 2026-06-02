@@ -2397,7 +2397,7 @@ function mimeToExt(mimeType: string): string {
   return '';
 }
 
-const OUTBOUND_DIR = join(homedir(), '.openclaw', 'media', 'outbound');
+const OUTBOUND_DIR = join(getOpenClawConfigDir(), 'media', 'outbound');
 const DIRECTORY_MIME_TYPE = 'application/x-directory';
 
 /**
@@ -2612,7 +2612,7 @@ async function resolveOutgoingMediaUrl(
     if (!m) return null;
     const attachmentId = decodeURIComponent(m[1]);
     if (!/^[A-Za-z0-9._-]+$/.test(attachmentId)) return null;
-    const recordPath = join(homedir(), '.openclaw', 'media', 'outgoing', 'records', `${attachmentId}.json`);
+    const recordPath = join(getOpenClawConfigDir(), 'media', 'outgoing', 'records', `${attachmentId}.json`);
     const fsP = await import('fs/promises');
     const raw = await fsP.readFile(recordPath, 'utf8');
     const record = JSON.parse(raw) as {
@@ -2867,7 +2867,7 @@ function isPathInside(child: string, parent: string): boolean {
  */
 function getFilePreviewWriteRoots(): string[] {
   const roots: string[] = [];
-  const openclawDir = join(homedir(), '.openclaw');
+  const openclawDir = getOpenClawConfigDir();
   roots.push(resolve(openclawDir));
   try {
     roots.push(resolve(app.getPath('userData')));

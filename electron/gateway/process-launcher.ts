@@ -4,7 +4,7 @@ import path from 'path';
 import type { GatewayLaunchContext } from './config-sync';
 import type { GatewayLifecycleState } from './process-policy';
 import { logger } from '../utils/logger';
-import { appendNodeRequireToNodeOptions } from '../utils/paths';
+import { appendNodeRequireToNodeOptions, getOpenClawHome } from '../utils/paths';
 
 const GATEWAY_FETCH_PRELOAD_SOURCE = `'use strict';
 (function () {
@@ -137,6 +137,12 @@ export async function launchGatewayProcess(options: {
   // `isDisabledByEnv()`).  Set after the `forkEnv` spread so any
   // pre-existing value inherited from the user shell cannot re-enable it.
   runtimeEnv.OPENCLAW_DISABLE_BONJOUR = '1';
+
+  // Pin the bundled gateway's OpenClaw home to ClawX's private dir so it never
+  // reads/writes a standalone official OpenClaw's ~/.openclaw. getOpenClawHome()
+  // returns OPENCLAW_HOME (defaulted to userData in main/index.ts) and matches
+  // getOpenClawConfigDir() used by the ClawX side, keeping config-sync in sync.
+  runtimeEnv.OPENCLAW_HOME = getOpenClawHome();
 
   // Only apply the fetch/child_process preload in dev mode.
   // In packaged builds Electron's UtilityProcess rejects NODE_OPTIONS
