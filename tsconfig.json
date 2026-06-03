@@ -20,11 +20,10 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    /* Paths */
-    "baseUrl": ".",
+    /* Paths (bundler mode resolves these relative to this config; no baseUrl needed) */
     "paths": {
-      "@/*": ["src/*"],
-      "@electron/*": ["electron/*"]
+      "@/*": ["./src/*"],
+      "@electron/*": ["./electron/*"]
     }
   },
   "include": ["src"],
