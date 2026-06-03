@@ -12,8 +12,22 @@ import { logger } from '../utils/logger';
 import { EventEmitter } from 'events';
 import { setQuitting } from './app-state';
 
-/** Base CDN URL (without trailing channel path) */
-const OSS_BASE_URL = 'https://oss.intelli-spectrum.com';
+/**
+ * Base update-feed URL (without trailing channel path).
+ *
+ * Reserved for a self-hosted feed. Resolution order:
+ *   1. CLAWX_UPDATE_FEED_URL env var (build/run-time override), else
+ *   2. DEFAULT_UPDATE_FEED_URL constant below.
+ *
+ * **Empty = auto-update fully disabled**: no feed is set, no update check is
+ * ever made, so the client never contacts any server (not the official one,
+ * not a missing one) and never surfaces an update error. When the self-hosted
+ * source is ready, set DEFAULT_UPDATE_FEED_URL (or the env var) to e.g.
+ * `https://updates.yourcompany.com` — channel dirs become `.../latest`, `.../alpha`.
+ */
+const DEFAULT_UPDATE_FEED_URL = '';
+const OSS_BASE_URL = (process.env.CLAWX_UPDATE_FEED_URL || DEFAULT_UPDATE_FEED_URL).trim();
+const UPDATES_ENABLED = OSS_BASE_URL.length > 0;
 
 export interface UpdateStatus {
   status: 'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error';
@@ -69,9 +83,19 @@ export class AppUpdater extends EventEmitter {
       debug: (msg: string) => logger.debug('[Updater]', msg),
     };
 
+    this.setupListeners();
+
+    // No feed configured → leave auto-update disabled. Never set a feed URL and
+    // never check, so the client makes zero update network calls and surfaces no
+    // update errors. Configure CLAWX_UPDATE_FEED_URL / DEFAULT_UPDATE_FEED_URL to enable.
+    const version = app.getVersion();
+    if (!UPDATES_ENABLED) {
+      logger.info(`[Updater] Version: ${version}; update feed not configured — auto-update disabled.`);
+      return;
+    }
+
     // Override feed URL for prerelease channels so that
     // alpha -> /alpha/alpha-mac.yml, beta -> /beta/beta-mac.yml, etc.
-    const version = app.getVersion();
     const channel = detectChannel(version);
     const feedUrl = `${OSS_BASE_URL}/${channel}`;
 
@@ -86,8 +110,6 @@ export class AppUpdater extends EventEmitter {
       url: feedUrl,
       useMultipleRangeRequest: false,
     });
-
-    this.setupListeners();
   }
 
   /**
@@ -170,6 +192,11 @@ export class AppUpdater extends EventEmitter {
    * final status so the UI never gets stuck in 'checking'.
    */
   async checkForUpdates(): Promise<UpdateInfo | null> {
+    // Feed not configured → report "no update" without any network call or error.
+    if (!UPDATES_ENABLED) {
+      this.updateStatus({ status: 'not-available' });
+      return null;
+    }
     try {
       const result = await autoUpdater.checkForUpdates();
 

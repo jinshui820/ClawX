@@ -21,4 +21,5 @@ markdown,说明「要解决什么 / 怎么改的 / 改了哪些文件 / 如何�
 | 规格 | 摘要 |
 |------|------|
 | [openclaw-isolation.md](openclaw-isolation.md) | 自带 OpenClaw 配置目录 + 端口与官方隔离,可同机共存 |
+| [update-feed.md](update-feed.md) | 自动更新源预留 + 默认关闭(不被官方覆盖、源缺失不报错) |
 | [build-and-dev-tooling.md](build-and-dev-tooling.md) | 打包/开发脚本:下载幂等、镜像兜底、Git bash、隔离 profile |

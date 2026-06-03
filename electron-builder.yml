@@ -52,14 +52,17 @@ npmRebuild: false
 
 # Auto-update configuration
 # Primary: Alibaba Cloud OSS (fast for Chinese users, used for auto-update)
-# Fallback: GitHub Releases (backup, used when OSS is unavailable)
+# Update feed — RESERVED placeholder for the self-hosted source.
+# Runtime feed is controlled by electron/main/updater.ts
+# (CLAWX_UPDATE_FEED_URL / DEFAULT_UPDATE_FEED_URL; empty = auto-update disabled).
+# This block only seeds app-update.yml and is the upload target for `--publish`.
+# When the self-hosted source is ready: replace the host below, set
+# DEFAULT_UPDATE_FEED_URL in updater.ts, and build with `--publish always`.
+# (.invalid never resolves, so it can never hit a real server by accident.)
 publish:
   - provider: generic
-    url: https://oss.intelli-spectrum.com/latest
+    url: https://updates.example.invalid/latest
     useMultipleRangeRequest: false
-  - provider: github
-    owner: ValueCell-ai
-    repo: ClawX
 
 # macOS Configuration
 mac:
