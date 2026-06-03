@@ -45,9 +45,9 @@ if (Test-Path (Join-Path $repoRoot '.git/rebase-merge')) {
     Fail "检测到未完成的 rebase。请先解决冲突并 ``git rebase --continue``(或 ``git rebase --abort``)后再运行。"
 }
 
-# 工作区必须干净
-if (git status --porcelain) {
-    Fail "工作区有未提交的改动,请先提交或 stash。"
+# 工作区必须干净(只看已跟踪文件;未跟踪文件不影响 rebase)
+if (git status --porcelain --untracked-files=no) {
+    Fail "工作区有未提交的已跟踪改动,请先提交或 stash。"
 }
 
 # 远程检查
