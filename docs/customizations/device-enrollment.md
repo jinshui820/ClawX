@@ -1,7 +1,7 @@
 # 定制规格:设备注册 + 远程发钥(客户端取 LiteLLM key)
 
-> 状态:设计定稿,客户端实现中。最后更新:2026-06-04。
-> 关联:部署方案安全 §163–172(每用户 LiteLLM 虚拟 key / OIDC-SSO / mTLS / 吊销);
+> 状态:客户端已实现(后端 + IPC + 设置页 UI + 首次配置播种,mock 端到端验证通过);服务端待实现。最后更新:2026-06-04。
+> 关联:部署方案 §11 安全(每用户 LiteLLM 虚拟 key / OIDC-SSO / mTLS / 吊销, 第 8 条客户端发钥) 与 §12 主备;
 > 默认配置注入见同目录 default-config.md。
 
 ## 目标
@@ -74,6 +74,9 @@
 
 - `electron/services/enrollment/`(新增):machineHash、enroll、refreshConfig、状态机、safeStorage 加密存储。
 - `electron/gateway/process-launcher.ts`(改):从已存的 key 注入 `LITELLM_API_KEY`。
+- `electron/main/ipc-handlers.ts`(改):`enrollment:*` IPC;`src/lib/api-client.ts` 注册通道。
+- `src/stores/enrollment.ts` + `src/components/settings/EnrollmentSettings.tsx`(新增):设置页注册 UI。
+- `electron/gateway/seed-default-config.ts`(新增):首次运行把打包默认配置 merge 进 openclaw.json。
 - 注册入口 URL:构建期可注入 `CLAWX_ENROLL_BASE_URL`(默认空=注册功能关闭,类似更新源预留)。
 - UI:Setup 向导/设置加「设备注册」入口 + 状态。
 - 联调:`scripts/dev-enroll-mock.mjs`(本地 mock /enroll /client-config)。
