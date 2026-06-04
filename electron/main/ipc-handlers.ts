@@ -70,6 +70,13 @@ import {
 } from '../services/providers/provider-runtime-sync';
 import { validateApiKeyWithProvider } from '../services/providers/provider-validation';
 import { appUpdater } from './updater';
+import {
+  enroll,
+  refreshClientConfig,
+  resetEnrollment,
+  getEnrollmentStatus,
+  getMachineHash,
+} from '../services/enrollment';
 import { GatewayRpcBackpressure } from '../gateway/rpc-backpressure';
 import { registerHostApiProxyHandlers } from './ipc/host-api-proxy';
 import {
@@ -491,6 +498,49 @@ function registerUnifiedRequestHandlers(gatewayManager: GatewayManager): void {
           if (request.action === 'cancelAutoInstall') {
             appUpdater.cancelAutoInstall();
             data = { success: true };
+            break;
+          }
+          return {
+            id: request.id,
+            ok: false,
+            error: {
+              code: 'UNSUPPORTED',
+              message: `APP_REQUEST_UNSUPPORTED:${request.module}.${request.action}`,
+            },
+          };
+        }
+        case 'enrollment': {
+          if (request.action === 'status') {
+            data = getEnrollmentStatus();
+            break;
+          }
+          if (request.action === 'machineHash') {
+            data = getMachineHash();
+            break;
+          }
+          if (request.action === 'enroll') {
+            const payload = request.payload as { code?: string; deviceName?: string } | undefined;
+            if (!payload?.code) throw new Error('Invalid enrollment.enroll payload');
+            try {
+              await enroll(payload.code, payload.deviceName);
+              data = { success: true, status: getEnrollmentStatus() };
+            } catch (error) {
+              data = { success: false, error: error instanceof Error ? error.message : String(error), status: getEnrollmentStatus() };
+            }
+            break;
+          }
+          if (request.action === 'refresh') {
+            try {
+              await refreshClientConfig();
+              data = { success: true, status: getEnrollmentStatus() };
+            } catch (error) {
+              data = { success: false, error: error instanceof Error ? error.message : String(error), status: getEnrollmentStatus() };
+            }
+            break;
+          }
+          if (request.action === 'reset') {
+            resetEnrollment();
+            data = { success: true, status: getEnrollmentStatus() };
             break;
           }
           return {

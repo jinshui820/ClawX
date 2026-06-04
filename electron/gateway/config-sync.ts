@@ -35,6 +35,7 @@ import { prependPathEntry } from '../utils/env-path';
 import { copyPluginFromNodeModules, fixupPluginManifest, cpSyncSafe, buildCandidateSources } from '../utils/plugin-install';
 import { CLAWX_OPENAI_IMAGE_PROVIDER_KEY } from '../utils/openclaw-image-relay-constants';
 import { stripSystemdSupervisorEnv } from './config-sync-env';
+import { seedDefaultOpenClawConfig } from './seed-default-config';
 import { cleanupAgentsSymlinkedSkills, cleanupStalePluginRuntimeDeps } from './skills-symlink-cleanup';
 import {
   buildPrelaunchMaintenanceCacheKey,
@@ -408,6 +409,11 @@ export async function syncGatewayConfigBeforeLaunch(
   const timingsMs: Record<string, number> = {};
   const maintenance: GatewayPrelaunchSyncSummary['maintenance'] = {};
   let configuredChannels: string[] = [];
+
+  // First-run only: merge the bundled default openclaw config (built per
+  // CLAWX_BUILD_ENV) before the gateway reads openclaw.json. Existing user
+  // values win; a marker prevents re-seeding. See seed-default-config.ts.
+  seedDefaultOpenClawConfig();
 
   // Reset the extension-deps cache so that newly installed extensions
   // (e.g. user added a channel while the app was running) get their

@@ -23,6 +23,7 @@ import { useSettingsStore } from '@/stores/settings';
 import { useGatewayStore } from '@/stores/gateway';
 import { useUpdateStore } from '@/stores/update';
 import { UpdateSettings } from '@/components/settings/UpdateSettings';
+import { EnrollmentSettings } from '@/components/settings/EnrollmentSettings';
 import {
   getGatewayWsDiagnosticEnabled,
   invokeIpc,
@@ -1031,6 +1032,9 @@ export function Settings() {
               </div>
             </>
           )}
+
+          {/* Device enrollment (renders only when CLAWX_ENROLL_BASE_URL is configured) */}
+          <EnrollmentSettings />
 
           <Separator className="bg-black/5 dark:bg-white/5" />
 
