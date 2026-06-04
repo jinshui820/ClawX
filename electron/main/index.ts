@@ -15,6 +15,7 @@ import { createMenu } from './menu';
 import { registerZoomShortcuts } from './zoom-shortcuts';
 
 import { appUpdater, registerUpdateHandlers } from './updater';
+import { startEnrollmentBackgroundRefresh } from '../services/enrollment';
 import { logger } from '../utils/logger';
 import { warmupNetworkOptimization } from '../utils/uv-env';
 import { initTelemetry } from '../utils/telemetry';
@@ -383,6 +384,10 @@ async function initialize(): Promise<void> {
 
   // Register update handlers
   registerUpdateHandlers(appUpdater, window);
+
+  // Keep the device-enrolled LiteLLM key fresh in the background (no-op unless
+  // enrollment is configured + the device is enrolled).
+  startEnrollmentBackgroundRefresh();
 
   // Note: Auto-check for updates is driven by the renderer (update store init)
   // so it respects the user's "Auto-check for updates" setting.

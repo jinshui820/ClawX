@@ -59,6 +59,25 @@ export function getEnrollmentStatus(): EnrollmentStatus {
   };
 }
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
+async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Stored key is considered stale once 80% of its TTL has elapsed (or no TTL/never fetched). */
+function isKeyStale(s: EnrollmentState): boolean {
+  if (!s.litellmKey) return true;
+  if (!s.ttlSeconds || !s.configFetchedAt) return true;
+  return Date.now() - s.configFetchedAt > s.ttlSeconds * 1000 * 0.8;
+}
+
 /** Exchange a one-time enrollment code for a device token bound to this machine. */
 export async function enroll(code: string, deviceName?: string): Promise<void> {
   if (!isEnrollmentConfigured()) {
@@ -67,7 +86,7 @@ export async function enroll(code: string, deviceName?: string): Promise<void> {
   const trimmed = code.trim();
   if (!trimmed) throw new Error('Enrollment code is empty.');
 
-  const res = await fetch(`${ENROLL_BASE_URL}/enroll`, {
+  const res = await fetchWithTimeout(`${ENROLL_BASE_URL}/enroll`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
@@ -98,7 +117,7 @@ export async function refreshClientConfig(): Promise<void> {
   const s = load();
   if (!isEnrollmentConfigured() || !s.deviceToken) return;
 
-  const res = await fetch(`${ENROLL_BASE_URL}/client-config`, {
+  const res = await fetchWithTimeout(`${ENROLL_BASE_URL}/client-config`, {
     headers: {
       authorization: `Bearer ${s.deviceToken}`,
       'x-machine-hash': getMachineHash(),
@@ -141,4 +160,40 @@ export function getLiteLLMBaseUrlOverride(): string | null {
 export function resetEnrollment(): void {
   clearSecureBlob();
   logger.info('[enrollment] local enrollment reset');
+}
+
+/**
+ * Best-effort: ensure a fresh LiteLLM key before a gateway launch.
+ * If enrolled and the stored key is missing/stale, refresh it. Network/server
+ * failures are swallowed so a down enrollment server never blocks gateway start
+ * (the gateway falls back to the last stored key, if any).
+ */
+export async function ensureFreshKeyForLaunch(): Promise<void> {
+  if (!isEnrollmentConfigured()) return;
+  const s = load();
+  if (!s.deviceToken || !isKeyStale(s)) return;
+  try {
+    await refreshClientConfig();
+  } catch (err) {
+    logger.warn('[enrollment] pre-launch key refresh failed; using last stored key:', err);
+  }
+}
+
+let backgroundRefreshTimer: NodeJS.Timeout | null = null;
+
+/**
+ * Start a periodic background refresh of the device key so the stored key stays
+ * fresh for the next gateway (re)launch. Best-effort; safe to call once at startup.
+ */
+export function startEnrollmentBackgroundRefresh(): void {
+  if (backgroundRefreshTimer || !isEnrollmentConfigured()) return;
+  const INTERVAL_MS = 15 * 60 * 1000; // 15 min
+  backgroundRefreshTimer = setInterval(() => {
+    const s = load();
+    if (!s.deviceToken || !isKeyStale(s)) return;
+    void refreshClientConfig().catch((err) => {
+      logger.warn('[enrollment] background key refresh failed:', err);
+    });
+  }, INTERVAL_MS);
+  if (backgroundRefreshTimer.unref) backgroundRefreshTimer.unref();
 }

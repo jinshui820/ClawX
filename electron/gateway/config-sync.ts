@@ -36,6 +36,7 @@ import { copyPluginFromNodeModules, fixupPluginManifest, cpSyncSafe, buildCandid
 import { CLAWX_OPENAI_IMAGE_PROVIDER_KEY } from '../utils/openclaw-image-relay-constants';
 import { stripSystemdSupervisorEnv } from './config-sync-env';
 import { seedDefaultOpenClawConfig } from './seed-default-config';
+import { ensureFreshKeyForLaunch } from '../services/enrollment';
 import { cleanupAgentsSymlinkedSkills, cleanupStalePluginRuntimeDeps } from './skills-symlink-cleanup';
 import {
   buildPrelaunchMaintenanceCacheKey,
@@ -414,6 +415,10 @@ export async function syncGatewayConfigBeforeLaunch(
   // CLAWX_BUILD_ENV) before the gateway reads openclaw.json. Existing user
   // values win; a marker prevents re-seeding. See seed-default-config.ts.
   seedDefaultOpenClawConfig();
+
+  // Best-effort: refresh the device-enrolled LiteLLM key before the gateway
+  // launches with it injected (no-op if enrollment unconfigured/not enrolled).
+  await ensureFreshKeyForLaunch();
 
   // Reset the extension-deps cache so that newly installed extensions
   // (e.g. user added a channel while the app was running) get their

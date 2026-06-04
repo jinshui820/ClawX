@@ -13,25 +13,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getOpenClawConfigDir, getResourcesDir } from '../utils/paths';
 import { logger } from '../utils/logger';
+import { isPlainObject, mergeUnder, type Json } from './seed-merge';
 
 const SEED_MARKER = '.clawx-default-config-seeded';
-
-type Json = Record<string, unknown>;
-
-function isPlainObject(v: unknown): v is Json {
-  return typeof v === 'object' && v !== null && !Array.isArray(v);
-}
-
-/** Deep-merge where `override` wins; `base` supplies defaults for missing keys. */
-function mergeUnder(base: unknown, override: unknown): unknown {
-  if (override === undefined) return base;
-  if (!isPlainObject(base) || !isPlainObject(override)) return override;
-  const out: Json = { ...base };
-  for (const key of Object.keys(override)) {
-    out[key] = key in base ? mergeUnder(base[key], override[key]) : override[key];
-  }
-  return out;
-}
 
 function readJsonSafe(path: string): Json {
   try {

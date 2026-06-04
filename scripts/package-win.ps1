@@ -19,12 +19,21 @@
 .PARAMETER KeepProxy
     保留当前 HTTP_PROXY/HTTPS_PROXY(默认会清除)。
 
+.PARAMETER Env
+    打包用的默认 openclaw 配置环境(dev|prod),设到 CLAWX_BUILD_ENV。
+    - dev(默认):打入本地测试栈配置(127.0.0.1:4000)。
+    - prod:打入生产模板(<VIP> 等占位),还需另设 CLAWX_LITELLM_VIP / CLAWX_N2_CX_IP /
+      CLAWX_SEARCH_HOST 等环境变量注入真实端点(见 config/build-config.json5)。
+
 .EXAMPLE
-    pwsh ./scripts/package-win.ps1
+    pwsh ./scripts/package-win.ps1                  # dev 配置
+    $env:CLAWX_LITELLM_VIP="litellm.corp.lan"; pwsh ./scripts/package-win.ps1 -Env prod
 #>
 
 param(
-    [switch]$KeepProxy
+    [switch]$KeepProxy,
+    [ValidateSet('dev', 'prod')]
+    [string]$Env = 'dev'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -55,6 +64,13 @@ if (-not $KeepProxy) {
             Remove-Item "Env:\$v" -ErrorAction SilentlyContinue
         }
     }
+}
+
+# 4. 选择打包进客户端的默认 openclaw 配置环境(dev/prod)
+$env:CLAWX_BUILD_ENV = $Env
+Write-Host "✓ CLAWX_BUILD_ENV=$Env(默认 openclaw 配置)" -ForegroundColor Green
+if ($Env -eq 'prod' -and -not $env:CLAWX_LITELLM_VIP) {
+    Write-Host "⚠ prod 构建但未设 CLAWX_LITELLM_VIP —— 生成的默认配置会保留 <VIP> 占位" -ForegroundColor Yellow
 }
 
 Write-Host "==> pnpm package:win" -ForegroundColor Cyan

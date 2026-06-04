@@ -5,7 +5,7 @@ import type { GatewayLaunchContext } from './config-sync';
 import type { GatewayLifecycleState } from './process-policy';
 import { logger } from '../utils/logger';
 import { appendNodeRequireToNodeOptions, getOpenClawHome } from '../utils/paths';
-import { getLiteLLMKey } from '../services/enrollment';
+import { getLiteLLMKey, getLiteLLMBaseUrlOverride } from '../services/enrollment';
 
 const GATEWAY_FETCH_PRELOAD_SOURCE = `'use strict';
 (function () {
@@ -152,6 +152,12 @@ export async function launchGatewayProcess(options: {
   const litellmKey = getLiteLLMKey();
   if (litellmKey) {
     runtimeEnv.LITELLM_API_KEY = litellmKey;
+  }
+  // If the enrollment server returned a base-URL override, expose it as
+  // ${LITELLM_BASE_URL} for templates that opt into a server-overridable endpoint.
+  const litellmBaseUrl = getLiteLLMBaseUrlOverride();
+  if (litellmBaseUrl) {
+    runtimeEnv.LITELLM_BASE_URL = litellmBaseUrl;
   }
 
   // Only apply the fetch/child_process preload in dev mode.
