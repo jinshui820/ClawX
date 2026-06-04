@@ -5,6 +5,7 @@ import type { GatewayLaunchContext } from './config-sync';
 import type { GatewayLifecycleState } from './process-policy';
 import { logger } from '../utils/logger';
 import { appendNodeRequireToNodeOptions, getOpenClawHome } from '../utils/paths';
+import { getLiteLLMKey } from '../services/enrollment';
 
 const GATEWAY_FETCH_PRELOAD_SOURCE = `'use strict';
 (function () {
@@ -143,6 +144,15 @@ export async function launchGatewayProcess(options: {
   // returns OPENCLAW_HOME (defaulted to userData in main/index.ts) and matches
   // getOpenClawConfigDir() used by the ClawX side, keeping config-sync in sync.
   runtimeEnv.OPENCLAW_HOME = getOpenClawHome();
+
+  // Inject the device-enrolled LiteLLM key as an env var so the bundled OpenClaw
+  // resolves `${LITELLM_API_KEY}` in openclaw.json without the key ever being
+  // written to the on-disk config. No enrollment / no key → nothing injected.
+  // See docs/customizations/device-enrollment.md.
+  const litellmKey = getLiteLLMKey();
+  if (litellmKey) {
+    runtimeEnv.LITELLM_API_KEY = litellmKey;
+  }
 
   // Only apply the fetch/child_process preload in dev mode.
   // In packaged builds Electron's UtilityProcess rejects NODE_OPTIONS

@@ -22,4 +22,6 @@ markdown,说明「要解决什么 / 怎么改的 / 改了哪些文件 / 如何�
 |------|------|
 | [openclaw-isolation.md](openclaw-isolation.md) | 自带 OpenClaw 配置目录 + 端口与官方隔离,可同机共存 |
 | [update-feed.md](update-feed.md) | 自动更新源预留 + 默认关闭(不被官方覆盖、源缺失不报错) |
+| [default-config.md](default-config.md) | 打包默认 openclaw 配置 + 按 dev/prod 构建期注入端点 |
+| [device-enrollment.md](device-enrollment.md) | 设备注册码(机器码绑定)+ 远程发 LiteLLM key + safeStorage |
 | [build-and-dev-tooling.md](build-and-dev-tooling.md) | 打包/开发脚本:下载幂等、镜像兜底、Git bash、隔离 profile |

@@ -87,3 +87,8 @@ resources/openclaw-plugins/skillshub/
 
 # Isolated ClawX dev profiles (sandbox userData + OpenClaw config)
 .profiles/
+
+# Generated default openclaw config (built per CLAWX_BUILD_ENV)
+resources/config-templates/
+# Local build-config overrides (secrets/personal)
+config/*.local.json5

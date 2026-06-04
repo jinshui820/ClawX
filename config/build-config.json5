@@ -1,0 +1,32 @@
+// 构建期默认 openclaw 配置的「环境选择 + 占位填充」表。
+//
+// scripts/generate-default-config.mjs 读本文件 + 环境变量 CLAWX_BUILD_ENV，
+// 选中某个 env → 取其 template → 用 values 替换模板里的 <占位符>
+// → 输出 resources/config-templates/openclaw.default.json（会被打进安装包)。
+//
+// 规则:
+//   - values 里的 "<TOKEN>": "字面值"  → 直接替换模板中的该占位符
+//   - values 的值若写成 "${env:NAME}"   → 取构建时环境变量 NAME(便于 CI/打包注入,不入库)
+//   - 模板里的 ${LITELLM_API_KEY} 等运行时引用**保持原样**(由客户端运行期从 keychain 注入,见 docs/customizations/device-enrollment.md)
+//   - 未被替换的 <占位符> 会在生成时告警(提醒你补值或确认)
+{
+  default: "dev",
+
+  envs: {
+    // 开发/本地测试:直接用已写好本地端点(127.0.0.1:4000)的模板,无需填值
+    dev: {
+      template: "docs/deployment/configs/openclaw.litellm.json5",
+      values: {},
+    },
+
+    // 生产:用占位模板,端点由构建期环境变量注入(未设则保留占位并告警)
+    prod: {
+      template: "docs/deployment/configs/openclaw.sample.json5",
+      values: {
+        "<VIP>": "${env:CLAWX_LITELLM_VIP}",        // LiteLLM 网关 VIP,如 litellm.corp.lan
+        "<N2_CX_IP>": "${env:CLAWX_N2_CX_IP}",      // Node2 内网 IP
+        "<SEARCH_HOST>": "${env:CLAWX_SEARCH_HOST}", // SearXNG 主机
+      },
+    },
+  },
+}
